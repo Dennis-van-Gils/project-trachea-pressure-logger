@@ -83,10 +83,14 @@ struct Pressure_Calibration {
 };
 
 // Calibration parameters: ESTIMATED, no calibration sheet supplied with sensor
-const Pressure_Calibration PRESSURE_CALIB{4.0, 16, 0.0689};
+// NOTE: The sensor is DIFFERENTIAL, so +/- 0.0689, hence the full range is
+// double this value
+const Pressure_Calibration PRESSURE_CALIB{4.0, 16, 0.0689 * 2.0f};
 
+// NOTE: The sensor is DIFFERENTIAL, so we have to add 12 mA to get to 0 bar
 inline float mA2bar(float mA, const Pressure_Calibration calib) {
-  return (mA - calib.zero_mA) / calib.span_mA * calib.full_range_bar;
+  return (mA - calib.zero_mA) / calib.span_mA * calib.full_range_bar -
+         calib.full_range_bar / 2.f;
 }
 
 /*------------------------------------------------------------------------------
@@ -161,8 +165,10 @@ void loop() {
     readings.pres_mA = R_click.get_EMA_mA();
     readings.pres_bar = mA2bar(readings.pres_mA, PRESSURE_CALIB);
     Serial.print(now);
+    // Serial.write('\t');
+    // Serial.print(readings.pres_mA, 2);
     Serial.write('\t');
-    Serial.println(readings.pres_bar * 1000, 2);
+    Serial.println(readings.pres_bar * 1000, 2); // Reports in mbar
   }
 
   if (flash && (now - flash_tick >= FLASH_LENGTH)) {
