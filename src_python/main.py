@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""A pressure and temperature logger for the Diffusive Bubble Growth setup.
+"""A pressure logger for Marco de Paoli's trachea tube.
 """
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
-__url__ = "https://github.com/Dennis-van-Gils/project-diffusive-bubble-growth"
-__date__ = "14-10-2022"
+__url__ = "https://github.com/Dennis-van-Gils/project-trachea-pressure-logger"
+__date__ = "09-11-2022"
 __version__ = "1.0"
 print(__url__)
 # pylint: disable=bare-except, broad-except, unnecessary-lambda
 
 import os
 import sys
-import time
 
 # Constants
-DAQ_INTERVAL_MS = 1  # [ms] Desired, not ground thruth. TODO: better description
+DAQ_INTERVAL_MS = 1  # [ms] Expected, not ground truth.
 CHART_INTERVAL_MS = 10  # [ms]
 CHART_HISTORY_TIME = 1800  # [s]
 
@@ -142,13 +141,13 @@ def get_current_date_time():
 
 
 class State(object):
-    """Reflects the actual readings of the Arduino and PT104. There should only
-    be one instance of the State class.
+    """Reflects the actual readings of the Arduino. There should only be one
+    instance of the State class.
     """
 
     def __init__(self):
         self.time = np.nan  # [s]
-        self.pres = np.nan  # [bar]
+        self.pres = np.nan  # [mbar]
 
 
 state = State()
@@ -162,7 +161,7 @@ class MainWindow(QtWid.QWidget):
     def __init__(self, parent=None, **kwargs):
         super().__init__(parent, **kwargs)
 
-        self.setWindowTitle("Diffusive Bubble Growth logger")
+        self.setWindowTitle("Trachea pressure logger")
         self.setGeometry(350, 60, 1200, 900)
         self.setStyleSheet(
             controls.SS_TEXTBOX_READ_ONLY
@@ -188,7 +187,7 @@ class MainWindow(QtWid.QWidget):
 
         # Middle box
         self.qlbl_title = QtWid.QLabel(
-            "Diffusive Bubble Growth logger",
+            "Trachea pressure logger",
             font=QtGui.QFont("Palatino", 14, weight=QtGui.QFont.Weight.Bold),
         )
         self.qlbl_title.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -247,8 +246,13 @@ class MainWindow(QtWid.QWidget):
         self.gw = pg.GraphicsLayoutWidget()
 
         # Plot: Pressure
+        p = {
+            "color": controls.COLOR_GRAPH_FG.name(),
+            "font-size": "12pt",
+            "font-family": "Helvetica",
+        }
         self.pi_pres = self.gw.addPlot(row=1, col=0)
-        self.pi_pres.setLabel("left", text="pressure (bar)", **p)
+        self.pi_pres.setLabel("left", text="pressure (mbar)", **p)
 
         self.plots = [self.pi_pres]
         for plot in self.plots:
@@ -288,8 +292,8 @@ class MainWindow(QtWid.QWidget):
 
         # fmt: off
         legend.grid.setHorizontalSpacing(6)
-        legend.grid.addWidget(self.qlin_pres             , 0, 2)
-        legend.grid.addWidget(QtWid.QLabel("± 0.008 bar"), 0, 3)
+        legend.grid.addWidget(self.qlin_pres               , 0, 2)
+        legend.grid.addWidget(QtWid.QLabel("± 0.02 mbar"), 0, 3)
         # fmt: on
 
         qgrp_readings = QtWid.QGroupBox("Readings")
@@ -381,7 +385,7 @@ class MainWindow(QtWid.QWidget):
         self.qlbl_recording_time.setText(
             f"REC: {logger.pretty_elapsed()}" if logger.is_recording() else ""
         )
-        self.qlin_pres.setText(f"{state.pres:.3f}")
+        self.qlin_pres.setText(f"{state.pres:.2f}")
 
     @Slot()
     def update_chart(self):
@@ -453,14 +457,13 @@ def DAQ_function():
 
     # Parse readings into separate state variables
     try:
-        state.pres = float(reply.strip())
+        split_reply = (reply.strip()).split("\t")
+        state.time = float(split_reply[0]) / 1000
+        state.pres = float(split_reply[1])
     except Exception as err:
         pft(err, 3)
         dprint(f"'{ard.name}' reports IOError @ {str_cur_date} {str_cur_time}")
         return False
-
-    # We use PC time
-    state.time = time.perf_counter()
 
     # Add readings to chart histories
     window.tscurve_pres.appendData(state.time, state.pres)
@@ -484,12 +487,12 @@ def write_header_to_log():
     logger.write(str_cur_time + "\n")
     logger.write(window.qtxt_comments.toPlainText())
     logger.write("\n\n[DATA]\n")
-    logger.write("[s]\t[±0.008 bar]\n")
+    logger.write("[s]\t[±0.02 mbar]\n")
     logger.write("time\tpres\n")
 
 
 def write_data_to_log():
-    logger.write(f"{logger.elapsed():.3f}\t{state.pres:.3f}\n")
+    logger.write(f"{logger.elapsed():.3f}\t{state.pres:.2f}\n")
 
 
 # ------------------------------------------------------------------------------
@@ -499,9 +502,7 @@ def write_data_to_log():
 if __name__ == "__main__":
 
     # Connect to: Arduino
-    ard = Arduino(
-        name="Ard", connect_to_specific_ID="Diffusive Bubble Growth logger"
-    )
+    ard = Arduino(name="Ard", connect_to_specific_ID="Trachea pressure logger")
     ard.serial_settings["baudrate"] = 115200
     ard.auto_connect(filepath_last_known_port="config/port_Arduino.txt")
 

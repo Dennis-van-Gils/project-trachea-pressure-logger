@@ -2,7 +2,7 @@
  * @file    main.cpp
  * @author  Dennis van Gils (vangils.dennis@gmail.com)
  * @version https://github.com/Dennis-van-Gils/project-diffusive-bubble-growth
- * @date    11-10-2022
+ * @date    09-11-2022
  *
  * @brief   A pressure logger for the Diffusive Bubble Growth setup.
  *
@@ -19,7 +19,16 @@
   - RS PRO #797-5018: Pressure Sensor, 0-10 bar, current output
 
   Reports the readings of the pressure sensor over the serial port as follows:
-  >> [averaged bit value] \t [averaged mA] \t [averaged bar] \n
+  >> [millis timestamp] \t [averaged millibars] \n
+
+  Pinout:
+    Feather M4        R Click
+    ----------        -------
+    3V                3.3V
+    GND               GND
+    D5                CS
+    MI                SDO
+    SCK               SCK
 
   The NeoPixel RGB LED of the Feather M4 will indicate its status:
   - Blue : We're setting up
@@ -73,8 +82,8 @@ struct Pressure_Calibration {
   float full_range_bar;
 };
 
-// Calibration parameters supplied with the pressure sensor: serial 1037812
-const Pressure_Calibration PRESSURE_CALIB{4.01, 15.99, 10.0};
+// Calibration parameters: ESTIMATED, no calibration sheet supplied with sensor
+const Pressure_Calibration PRESSURE_CALIB{4.0, 16, 0.0689};
 
 inline float mA2bar(float mA, const Pressure_Calibration calib) {
   return (mA - calib.zero_mA) / calib.span_mA * calib.full_range_bar;
@@ -137,7 +146,7 @@ void loop() {
     if (strcmp(str_cmd, "id?") == 0) {
       // Report identity string
       report = false;
-      Serial.println("Arduino, Diffusive Bubble Growth logger");
+      Serial.println("Arduino, Trachea pressure logger");
 
     } else if (strcmp(str_cmd, "on") == 0) {
       report = true;
@@ -151,8 +160,9 @@ void loop() {
     tick = now;
     readings.pres_mA = R_click.get_EMA_mA();
     readings.pres_bar = mA2bar(readings.pres_mA, PRESSURE_CALIB);
-    Serial.println(readings.pres_bar, 3);
-    // Serial.println(R_click.get_EMA_obtained_interval());
+    Serial.print(now);
+    Serial.write('\t');
+    Serial.println(readings.pres_bar * 1000, 2);
   }
 
   if (flash && (now - flash_tick >= FLASH_LENGTH)) {

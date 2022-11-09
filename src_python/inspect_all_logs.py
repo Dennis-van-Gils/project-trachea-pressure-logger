@@ -5,8 +5,8 @@ figure will be processed. Useful tool for quick inspection.
 """
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
-__url__ = "https://github.com/Dennis-van-Gils/project-diffusive-bubble-growth"
-__date__ = "14-10-2022"
+__url__ = "https://github.com/Dennis-van-Gils/project-trachea-pressure-logger"
+__date__ = "09-11-2022"
 __version__ = "1.0"
 
 import os

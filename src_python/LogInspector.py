@@ -7,8 +7,8 @@ When called straight from the command line it will open a file-navigator.
 """
 __author__ = "Dennis van Gils"
 __authoremail__ = "vangils.dennis@gmail.com"
-__url__ = "https://github.com/Dennis-van-Gils/project-diffusive-bubble-growth"
-__date__ = "14-10-2022"
+__url__ = "https://github.com/Dennis-van-Gils/project-trachea-pressure-growth"
+__date__ = "09-11-2022"
 __version__ = "1.0"
 
 
@@ -147,9 +147,9 @@ def plot_log(log: Log):
 
     # Plot pressure
     ax1.plot(log.time, log.pres, color=cm[1], label="Pressure")
-    ax1.set_title(f"Pressure ({CHAR_PM} 0.008 bar)")
+    ax1.set_title(f"Pressure ({CHAR_PM} 0.02 mbar)")
     ax1.set_xlabel("time (s)")
-    ax1.set_ylabel("pressure (bar)")
+    ax1.set_ylabel("pressure (mbar)")
     ax1.grid(True)
 
     # Finalize lay-out
