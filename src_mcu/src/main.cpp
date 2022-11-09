@@ -61,7 +61,7 @@ const uint32_t FLASH_LENGTH = 100; // [us]
 const uint8_t PIN_R_CLICK = 5;
 
 // Calibrated against a multimeter @ 11-10-2022 by DPM van Gils
-const RT_Click_Calibration R_CLICK_CALIB{3.99, 20.15, 796, 4020};
+const RT_Click_Calibration R_CLICK_CALIB{4.11, 20.02, 830, 4002};
 
 // Single R click readings fluctuate a lot and so we will employ an exponential
 // moving average (EMA) by using oversampling and subsequent low-pass filtering
